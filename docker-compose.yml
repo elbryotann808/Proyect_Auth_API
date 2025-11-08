@@ -1,0 +1,13 @@
+services:
+  postgres: 
+    image: postgres:15
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=auth-api
+
+volumes:
+  postgres:

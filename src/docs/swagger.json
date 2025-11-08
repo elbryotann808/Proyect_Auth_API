@@ -1,0 +1,15 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Auth",
+    "version": "1.0.0",
+    "description": "esto es una descripcion"
+  },
+  "servers": [
+    {
+      "url": "localhost:3000/api/auth",
+      "descripcion": "esto es una api"
+    }
+  ]
+  
+}

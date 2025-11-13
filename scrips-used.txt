@@ -1,30 +1,38 @@
-# Inicializacion del proyecto
+# Project initiation
 npm init -y
 
-# Cofiguracion con typescript
+# Configuration with TypeScript
 npm i typescript @types/node tsx -D
 npx tsc --init
 
-# Configuracion del esLint
+# Cofiguration with esLint
 npm i eslint -D
 npx eslint --init 
 
-# Dependencias para el servidor
+# Server dependencies
 npm i express cors
 npm i @types/express @types/cors -D
 
-# Dependencias para la documentacion 
+# Documentation dependencies
 npm i swagger-ui-express
 npm i -D @types/swagger-ui-express
 
-# Dependencias para el testing
+# Testing dependencies
 npm i -D vitest supertest @types/supertest
 
-# Dependencias para la base de datos
+# Database dependencies
 npm i prisma -D
 npm i @prisma/client
 npx prisma init
 npx prisma migrate dev --name "init"
 npx prisma studio
+
+# Security dependencies
+npm i bcrypt
+npm i jsonwebtoken
+npm i cookie-parser
+
+npm i -D @types/bcrypt @types/jsonwebtoken @types/cookie-parser
+
 
 

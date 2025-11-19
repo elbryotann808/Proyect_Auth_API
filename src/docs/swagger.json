@@ -3,16 +3,16 @@
   "info": {
     "title": "Auth",
     "version": "1.0.0",
-    "description": "esto es una descripcion"
+    "description": "Authentication API responsible for user registration, login, token renewal, logout, and status verification. It manages sessions with refresh tokens stored in HttpOnly cookies and issues JWT access tokens for authorization of protected paths. It includes health endpoints to check the database connection and standardized error responses."
   },
   "servers": [
     {
       "url": "/api/auth",
-      "descripcion": "esto es una api"
+      "descripcion": "Local server"
     }
   ],
   "tags": [
-    {"name": "Auth", "description": "esto es una descripcion de una tags"}
+    {"name": "Auth", "description": "Registration, login, update, logout, and status check paths"}
   ],
   "components": {
     "securitySchemes": {

@@ -100,6 +100,29 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 } 
 
+export const logoutUser = async (req: Request, res: Response) =>{
+  try {
+     const refreshToken = 
+    (req.cookies && req.cookies.refreshToken) ||
+    (req.body && req.body.refreshToken) ||
+    (req.headers.authorization && String(req.headers.authorization).split(" ")[1]) 
+
+    if (refreshToken) await revokeSessionByToken(String(refreshToken))
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/"
+    })
+
+    return res.status(200).json({ message: "Logged out"})
+  } catch (error) {
+    console.error("logout error", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 export const refreshToken = async (req: Request, res: Response) =>{
   try {
     const refreshToken = 
@@ -148,29 +171,6 @@ export const refreshToken = async (req: Request, res: Response) =>{
   }
 }
 
-export const  logoutUser = async (req: Request, res: Response) =>{
-  try {
-     const refreshToken = 
-    (req.cookies && req.cookies.refreshToken) ||
-    (req.body && req.body.refreshToken) ||
-    (req.headers.authorization && String(req.headers.authorization).split(" ")[1]) 
-
-    if (refreshToken) await revokeSessionByToken(String(refreshToken))
-
-    res.clearCookie("refreshToken", {
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/"
-    })
-
-    return res.status(200).json({ message: "Logged out"})
-  } catch (error) {
-    console.error("logout error", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-}
-
 export const getMe = async (req: Request, res: Response) =>{
   try {
     const payLoad = (req as unknown as { user?: {sub: string}}).user
@@ -194,8 +194,7 @@ export const getMe = async (req: Request, res: Response) =>{
 export const testConection = async(req: Request, res: Response) => {
   try {
     const date = await prisma.$queryRaw`SELECT NOW()`;
-    
-    res.status(200).send(date)
+    res.status(200).json({messge: date})
     console.log(date);
   } catch (error) {
     console.log(error);

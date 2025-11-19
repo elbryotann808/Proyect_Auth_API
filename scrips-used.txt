@@ -35,4 +35,6 @@ npm i cookie-parser
 npm i -D @types/bcrypt @types/jsonwebtoken @types/cookie-parser
 
 
-
+# Viewer dependencies
+npm i ejs
+npm i -D @types/ejs

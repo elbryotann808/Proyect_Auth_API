@@ -1,0 +1,117 @@
+<%- include('partials/header') -%>
+<div class="conteiner">
+  <div class="login">
+    <h1 class="login__title">Login</h1>
+    
+    <form class="login__form" id="loginForm">
+      <div class="login__containter-inputs">
+        <label for="email">Email</label>
+        <input class="login__input login__input-email" id="email" name="email" type="email" required>
+    
+        <label for="password">Password</label>
+        <input class="login__input login__input-password" id="password" name="password" type="password" required>
+      </div>
+      <div class="login__containter-btn">
+        <button class="login__btn-submit" type="submit">Submit</button>
+      </div>
+    </form>
+     <!-- <div id="apiResult" aria-live="polite" style="margin-top:1rem;"></div> -->
+  </div>
+</div>
+
+<style>
+  .conteiner{
+    display: flex;
+    height: 100vh; 
+    align-items: center;
+    justify-content: center;
+  }
+
+  .login{
+    display: flex;
+    flex-direction: column;
+    color: white;
+    background: linear-gradient(160deg, rgb(31, 34, 35),rgb(11, 11, 11));
+
+    width: 310px;
+    height: 300px;
+    border-radius: 5px;
+    padding: 10px;
+  }
+
+  .login__title{
+    margin-bottom: 11px;
+  }
+
+  .login__form{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .login__containter-inputs{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .login__input{
+    padding: 5px;
+    border-radius: 5px;
+    background-color: rgb(59, 59, 59);
+    color: white;
+    border: none;
+    outline: none;
+  }
+
+  .login__containter-btn{
+    display: flex;
+    flex-direction: column;
+  }
+
+  .login__btn-submit{
+    background-color: rgb(12, 22, 133);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: lighter;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+</style>
+<script>
+  const form = document.getElementById("loginForm")
+  const resultEl = document.getElementById("apiResult")
+
+  form.addEventListener("submit", async(e)=>{
+    e.preventDefault()
+
+    const email = form.email.value.trim()
+    const password = form.password.value
+
+    const dataLogin = {
+      email,
+      password,
+    }
+    
+    console.log(dataLogin);
+    
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dataLogin)  
+    })
+
+    const datajson = await response.json()
+    console.log(datajson);
+  })
+
+</script>
+
+<%- include('partials/header') -%>

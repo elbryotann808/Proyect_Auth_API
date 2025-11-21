@@ -65,7 +65,7 @@ export const registerUser = async(req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   try {
     if (!req.body || typeof req.body !=="object") {
-      return res.status(422).json({ mesage: "Invalid request body"})
+      return res.status(422).json({ message: "Invalid request body"})
     }
   
     const { email, password } = req.body as {email?: string; password?: string}
@@ -107,6 +107,8 @@ export const logoutUser = async (req: Request, res: Response) =>{
     (req.body && req.body.refreshToken) ||
     (req.headers.authorization && String(req.headers.authorization).split(" ")[1]) 
 
+    if (!refreshToken) return res.status(400).json({ message: "Missing refresh token" })
+
     if (refreshToken) await revokeSessionByToken(String(refreshToken))
 
     res.clearCookie("refreshToken", {
@@ -130,7 +132,7 @@ export const refreshToken = async (req: Request, res: Response) =>{
     (req.body && req.body.refreshToken) ||
     (req.headers.authorization && String(req.headers.authorization).split(" ")[1]) 
 
-    if (!refreshToken) return res.status(400).json({ mesage: "Missing refresh token" })
+    if (!refreshToken) return res.status(400).json({ message: "Missing refresh token" })
 
     const session = await findsessionByToken(String(refreshToken))
     if (!session || session.revoked ) {
@@ -174,12 +176,12 @@ export const refreshToken = async (req: Request, res: Response) =>{
 export const getMe = async (req: Request, res: Response) =>{
   try {
     const payLoad = (req as unknown as { user?: {sub: string}}).user
-    if (!payLoad || !payLoad.sub) res.status(401).json({ message: "Unauthorized"})
+    if (!payLoad || !payLoad.sub) res.status(401).json({ message: "Autorization token missing"})
 
     const userId = Number(payLoad?.sub)
     const user = await prisma.user.findUnique({
       where: {id: userId},
-      select: { id: true, email: true, name: true, role: true }
+      select: { id: true, email: true, name: true, role: true, createdAt: true }
     })
     
     if (!user) return res.status(404).json({ message: "User not found"}) 
@@ -194,7 +196,7 @@ export const getMe = async (req: Request, res: Response) =>{
 export const testConection = async(req: Request, res: Response) => {
   try {
     const date = await prisma.$queryRaw`SELECT NOW()`;
-    res.status(200).json({messge: date})
+    res.status(200).json(date)
     console.log(date);
   } catch (error) {
     console.log(error);

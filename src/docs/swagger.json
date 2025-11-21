@@ -157,6 +157,12 @@
       "ErrorResponseInvalidCredentials": {
         "type": "object", 
         "properties": {
+          "message": { "type": "string", "example": "Invalid credentials" }
+        }
+      },
+      "ErrorResponseInvalidBody": {
+        "type": "object",
+        "properties": {
           "message": { "type": "string", "example": "Invalid request body" }
         }
       },
@@ -167,7 +173,7 @@
         }
       },
       "ErrorResponseInvalidOrRevokedToken": {
-        "type": "string", 
+        "type": "object", 
         "properties": {
           "message": { "type": "string", "example": "Invalid or revoked refresh token" }
         }
@@ -181,7 +187,7 @@
       "ErrorResponseUnauthorized": {
         "type": "object", 
         "properties": { 
-          "message": { "type": "string", "example": "Unauthorized" } 
+          "message": { "type": "string", "example": "Autorization token missing" } 
         }
       },
       "ErrorResponseUserNotFound": {
@@ -264,7 +270,7 @@
                 "schema": { "type": "string" }
               }
             },
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Loging" } } }
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/loginResponse" } } }
           },
           "400": {
             "description": "Missing fields or invalid format", 
@@ -276,7 +282,7 @@
           },
           "422": {
             "description": "Invalid request body",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponseInvalidCredentials" } } }
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponseInvalidBody" } } }
           },
           "500": {
             "description": "Error response when the server fails, and the error is unexpected",
@@ -317,6 +323,12 @@
                 "schema": { "$ref": "#/components/schemas/LogoutResponse" }
               }
             }
+          },
+          "400": {
+            "description": "It need a token to revoke this token in the database",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponseMissingToken" } }
+             }
           },
           "500": {
             "description": "Error response when the server fails, and the error is unexpected", 
@@ -385,7 +397,7 @@
     }, 
     "/me": {
       "get": {
-        "tag": ["Auth"],
+        "tags": ["Auth"],
         "summary": "Obtain data of the authenticated user",
         "description": "Required header: Authorization: Bearer <accessToken>. Returns the user associated with the token",
         "security": [{ "bearerAuth": [] }],
@@ -415,7 +427,7 @@
     },
     "/connection": {
       "get": {
-        "tag": ["Auth"], 
+        "tags": ["Auth"], 
         "summary": "Health check / Test connection with the database",
         "description": "Execute `SELECT NOW()` and return the result.This is useful for health checks",
         "responses": {

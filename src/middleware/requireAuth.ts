@@ -21,6 +21,6 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     return next();
   } catch (error) {
     console.error(error)
-    return res.status(401).json({ message: "Invalid or expired token"})
+    return res.status(401).json({ message: "Authorization token missing"})
   }
 }

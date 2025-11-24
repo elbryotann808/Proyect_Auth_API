@@ -3,7 +3,6 @@ import app from "../src/app.js";
 import { describe, it, expect, afterAll, } from "vitest";
 import { PrismaClient  } from "@prisma/client"; 
 
-
 const prisma = new PrismaClient()
 
 const userTest = {
@@ -244,8 +243,6 @@ describe("GET /me", ()=>{
   // Documentar el codigo de error 404
 })
 
-// 
-// GET /api/auth/ -> 200 (DB real)
 describe("GET /connection", () => {
   it("Auth API - verification the server, i should responde with the current date", async () => {
     const res = await request(app)

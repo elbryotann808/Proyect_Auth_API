@@ -1,0 +1,26 @@
+<%- include('partials/header') -%>
+<div class="home">
+  <h1 class="home__title">Home</h1>
+
+  <div class="home__container-boxes">
+    <div class="home__box-opt" id="logout">
+      <p>Log out</p>
+    </div>
+
+    <div class="home__box-opt" id="dateNow">
+      <p>Date now</p>
+    </div>
+
+    <a href="/docs" id="docs" class="home__box-opt home__box-opt-link">
+      <p>Docs</p>
+    </a>
+  </div>
+
+  <div class="home__console">
+    <p class="console__title">Console</p>
+    <div class="console__response" id="apiResult" aria-live="polite"></div>
+  </div>
+</div>
+<script src="/js/home.js"></script>
+
+<%- include('partials/footer') -%>

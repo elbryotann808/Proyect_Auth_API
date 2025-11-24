@@ -1,205 +1,254 @@
-import type { Request, Response } from "express"
-import { prisma } from "../db.js"; 
+import type { Request, Response } from "express";
+import { prisma } from "../db.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { signJwt } from "../services/jwt.service.js";
-import { 
+import {
   createSession,
   findsessionByToken,
-  revokeSessionByToken
- } from "../services/session.service.js";
+  revokeSessionByToken,
+} from "../services/session.service.js";
 
 const SALT_ROUNDS = 10;
-const REFRESH_TOKEN_EXPIRES_DAYS = Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS ?? 7)
+const REFRESH_TOKEN_EXPIRES_DAYS = Number(
+  process.env.REFRESH_TOKEN_EXPIRES_DAYS ?? 7
+);
 
+const makeRefreshToken = () => crypto.randomBytes(64).toString("hex");
 
-const makeRefreshToken = ()=> crypto.randomBytes(64).toString("hex")
-
-const setRefreshCookie = (res: Response, token: string) =>{
-  const maxAge = REFRESH_TOKEN_EXPIRES_DAYS * 24 * 60 * 60 * 1000
+const setRefreshCookie = (res: Response, token: string) => {
+  const maxAge = REFRESH_TOKEN_EXPIRES_DAYS * 24 * 60 * 60 * 1000;
   res.cookie("refreshToken", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge,
-  })
+  });
+};
 
-}
-
-export const registerUser = async(req: Request, res: Response) => {
+export const registerUser = async (req: Request, res: Response) => {
   try {
-    const {name, email, password} = req.body
-    if (!name || !email || !password) res.status(400).json({message: "All fields are required"})
+    const { name, email, password } = req.body;
+    if (!name || !email || !password)
+      res.status(400).json({ message: "All fields are required" });
 
-    const existingEmail = await prisma.user.findUnique({where: {email}})
-    if (existingEmail) res.status(409).json({message: "Email already registered"})
+    const existingEmail = await prisma.user.findUnique({ where: { email } });
+    if (existingEmail)
+      res.status(409).json({ message: "Email already registered" });
 
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS) 
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     const user = await prisma.user.create({
       data: { name, email, password: hashedPassword },
-      select: { id: true, name: true, email: true, role:true , createdAt: true },
-    })
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
 
-    const accessToken = signJwt({sub: String(user.id), email: user.email, role: user.role})
-    const refreshToken = makeRefreshToken()
+    const accessToken = signJwt({
+      sub: String(user.id),
+      email: user.email,
+      role: user.role,
+    });
+    const refreshToken = makeRefreshToken();
 
     await createSession({
       userId: user.id,
       refreshToken,
       userAgent: req.headers["user-agent"] ?? null,
       ip: req.ip ?? null,
-    })
+    });
 
-    setRefreshCookie(res, refreshToken)
+    setRefreshCookie(res, refreshToken);
 
-    return res.status(201).json({user, accessToken})
-
+    return res.status(201).json({ user, accessToken });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({message: 'Internal server error'})
+    return res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    if (!req.body || typeof req.body !=="object") {
-      return res.status(422).json({ message: "Invalid request body"})
+    if (!req.body || typeof req.body !== "object") {
+      return res.status(422).json({ message: "Invalid request body" });
     }
-  
-    const { email, password } = req.body as {email?: string; password?: string}
-    if (!email || !password) return res.status(400).json({message: "All fields are required"}) 
-    
+
+    const { email, password } = req.body as {
+      email?: string;
+      password?: string;
+    };
+    if (!email || !password)
+      return res.status(400).json({ message: "All fields are required" });
+
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, password: true, name: true, role: true, createdAt: true}
-    })
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        role: true,
+        createdAt: true,
+      },
+    });
 
-    if (!user) return res.status(401).json({ message: "Invalid credentials"})
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
-    const passwordMatches = await bcrypt.compare(password, user.password)
-    if (!passwordMatches) return res.status(401).json({message: "Invalid credentials"})
+    const passwordMatches = await bcrypt.compare(password, user.password);
+    if (!passwordMatches)
+      return res.status(401).json({ message: "Invalid credentials" });
 
-    const accessToken = signJwt({ sub: String(user.id), email: user.email, role: user.role })
-    const refreshToken = makeRefreshToken()    
+    const accessToken = signJwt({
+      sub: String(user.id),
+      email: user.email,
+      role: user.role,
+    });
+    const refreshToken = makeRefreshToken();
 
     await createSession({
       userId: user.id,
       refreshToken,
       userAgent: req.headers["user-agent"] ?? null,
-      ip: req.ip ?? null
-    })
+      ip: req.ip ?? null,
+    });
 
-    setRefreshCookie(res, refreshToken)
-    const userSafe = { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt }
-    return res.status(200).json({ message: "Logged in", user: userSafe, accessToken })
+    setRefreshCookie(res, refreshToken);
+    const userSafe = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+    };
+    return res
+      .status(200)
+      .json({ message: "Logged in", user: userSafe, accessToken });
   } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Internal server error" });
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
   }
-} 
+};
 
-export const logoutUser = async (req: Request, res: Response) =>{
+export const logoutUser = async (req: Request, res: Response) => {
   try {
-     const refreshToken = 
-    (req.cookies && req.cookies.refreshToken) ||
-    (req.body && req.body.refreshToken) ||
-    (req.headers.authorization && String(req.headers.authorization).split(" ")[1]) 
+    const refreshToken =
+      (req.cookies && req.cookies.refreshToken) ||
+      (req.body && req.body.refreshToken) ||
+      (req.headers.authorization &&
+        String(req.headers.authorization).split(" ")[1]);
 
-    if (!refreshToken) return res.status(400).json({ message: "Missing refresh token" })
+    if (!refreshToken)
+      return res.status(400).json({ message: "Missing refresh token" });
 
-    if (refreshToken) await revokeSessionByToken(String(refreshToken))
+    if (refreshToken) await revokeSessionByToken(String(refreshToken));
 
     res.clearCookie("refreshToken", {
-      httpOnly: true, 
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      path: "/"
-    })
+      path: "/",
+    });
 
-    return res.status(200).json({ message: "Logged out"})
+    return res.status(200).json({ message: "Logged out" });
   } catch (error) {
     console.error("logout error", error);
     return res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
-export const refreshToken = async (req: Request, res: Response) =>{
+export const refreshToken = async (req: Request, res: Response) => {
   try {
-    const refreshToken = 
-    (req.cookies && req.cookies.refreshToken) ||
-    (req.body && req.body.refreshToken) ||
-    (req.headers.authorization && String(req.headers.authorization).split(" ")[1]) 
+    const refreshToken =
+      (req.cookies && req.cookies.refreshToken) ||
+      (req.body && req.body.refreshToken) ||
+      (req.headers.authorization &&
+        String(req.headers.authorization).split(" ")[1]);
 
-    if (!refreshToken) return res.status(400).json({ message: "Missing refresh token" })
+    if (!refreshToken)
+      return res.status(400).json({ message: "Missing refresh token" });
 
-    const session = await findsessionByToken(String(refreshToken))
-    if (!session || session.revoked ) {
-      return res.status(401).json({ message: "Invalid or revoked refresh token" })
+    const session = await findsessionByToken(String(refreshToken));
+    if (!session || session.revoked) {
+      return res
+        .status(401)
+        .json({ message: "Invalid or revoked refresh token" });
     }
 
     const user = await prisma.user.findUnique({
-      where: {id : session.userId},
-      select: {id: true, email: true, role:true}
-    })
+      where: { id: session.userId },
+      select: { id: true, email: true, role: true },
+    });
 
-    if (!user){
-      await prisma.session.update({
-        where: { id: session.id },
-        data: { revoked: true }
-      }).catch(()=> {})
-      return res.status(404).json({ message: "Invalid session" })
+    if (!user) {
+      await prisma.session
+        .update({
+          where: { id: session.id },
+          data: { revoked: true },
+        })
+        .catch(() => {});
+      return res.status(404).json({ message: "Invalid session" });
     }
 
     // const accessToken = signJwt({ sub: String(session.userId)})
     const accessToken = signJwt({
       sub: String(user.id),
       email: user.email ?? undefined,
-      role: user.role
-    })
+      role: user.role,
+    });
 
-    const newRefreshToken = makeRefreshToken()
+    const newRefreshToken = makeRefreshToken();
     await prisma.session.update({
       where: { id: session.id },
-      data: { refreshToken: newRefreshToken }
-    })
+      data: { refreshToken: newRefreshToken },
+    });
 
-    setRefreshCookie(res, newRefreshToken)
-    return res.status(200).json({ accessToken })
+    setRefreshCookie(res, newRefreshToken);
+    return res.status(200).json({ accessToken });
   } catch (error) {
-    console.error(error)
-    return res.status(500).json({ message: "Internal server error"})
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
-export const getMe = async (req: Request, res: Response) =>{
+export const getMe = async (req: Request, res: Response) => {
   try {
-    const payLoad = (req as unknown as { user?: {sub: string}}).user
-    if (!payLoad || !payLoad.sub) res.status(401).json({ message: "Autorization token missing"})
+    const payLoad = (req as unknown as { user?: { sub: string } }).user;
+    if (!payLoad || !payLoad.sub)
+      res.status(401).json({ message: "Autorization token missing" });
 
-    const userId = Number(payLoad?.sub)
+    const userId = Number(payLoad?.sub);
     const user = await prisma.user.findUnique({
-      where: {id: userId},
-      select: { id: true, email: true, name: true, role: true, createdAt: true }
-    })
-    
-    if (!user) return res.status(404).json({ message: "User not found"}) 
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+      },
+    });
 
-    return res.status(200).json(user)
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    return res.status(200).json(user);
   } catch (error) {
-    console.error("getMe error", error)
-    return res.status(500).json({ message: "Internal server error" })
+    console.error("getMe error", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
-export const testConection = async(req: Request, res: Response) => {
+export const testConection = async (req: Request, res: Response) => {
   try {
     const date = await prisma.$queryRaw`SELECT NOW()`;
-    res.status(200).json(date)
+    res.status(200).json(date);
     console.log(date);
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ mesagge: "Internal server error" })
+    return res.status(500).json({ mesagge: "Internal server error" });
   }
-}
+};

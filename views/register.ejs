@@ -1,0 +1,44 @@
+<%- include('partials/header') -%>
+<div class="conteiner">
+  <div class="form">
+    <h1 class="form__title">Register</h1>
+
+    <form class="form__form-data" id="registerForm">
+      <div class="form__container-inputs">
+        <label for="name">Name</label>
+        <input class="form__input" type="text" id="name" name="name" required />
+
+        <label for="email">Email</label>
+        <input
+          class="form__input"
+          type="email"
+          id="email"
+          name="email"
+          required
+        />
+
+        <label for="password">Password</label>
+        <input
+          class="form__input"
+          type="password"
+          id="password"
+          name="password"
+          required
+        />
+
+        <p class="form__ask-user">
+          Already have an account?
+          <span><a class="form__link-user" href="/login">Sign in here.</a></span>
+        </p>
+        <div id="apiResult" aria-live="polite"></div>
+      </div>
+
+      <div class="form__containter-btn">
+        <button class="form__btn-submit" type="submit">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/register.js"></script>
+<%- include('partials/footer') -%>
